@@ -23,7 +23,7 @@ Each endpoint's output changes what Airlock does next. Nothing is called for sho
 | 1 | **Guard** `/injection` (`source: "content"`, the agent's permissions in `instructions`) | injection probability, attack category, severity, evidence passages with character offsets | Cuts each flagged passage out of the text at its offsets before anything else reads it. Severity sets the policy floor (critical/high → block). 30–50% → a person decides. |
 | 1 | **Inspect** `/script` (one call per code block or run of command lines, run in parallel with Guard) | malicious and suspicious probabilities, behaviour category, severity, the lines behind the judgment | Withholds every malicious or suspicious block from the agent; highlights the exact lines. Never executes anything. Skipped (no credits spent) when the text has no code. |
 | 2 | **Protect** `/pii` (nine default kinds plus a custom `secret` kind for API keys and tokens, `anonymize: "replace"`) | each finding with type, value, offsets, and an anonymized copy | The anonymized copy of the *already quarantined* text becomes the safe copy the agent receives. Any finding raises the floor to "forward the masked copy". |
-| 3 | **Decide** `/decide` (state = masked copy + the earlier findings) | a `choice` route with probabilities, and a `multiselect` of what the text asks for: run code, move money, share secrets, change access, contact an outside address, routine | Can escalate the route, never relax it. A sensitive ask (money, secrets, access, code) forces human review. A top probability under 60% hands the decision to a person. |
+| 3 | **Decide** `/decide` (state = masked copy + the earlier findings) | a `choice` route with probabilities, and a `multiselect` of what the text asks for: run code, move money, share secrets, change access, contact an outside address, routine | Can escalate the route, never relax it. A sensitive ask (money, secrets, access, code) forces human review unless Decide, which read the agent's permissions, puts at least 80% on the forward routes. A top probability under 60% hands the decision to a person. |
 
 **Why these together:** Guard and Inspect catch the two ways untrusted text attacks an agent (telling it what to do, and giving it something to run). Protect then makes the remaining, legitimate text safe to share. Decide reads the result like a reviewer would and catches what the detectors don't score, such as a perfectly polite email that still asks the agent to change bank details. All three Protect / Guard / Inspect endpoints are used, plus Decide.
 
@@ -48,7 +48,7 @@ Each endpoint's output changes what Airlock does next. Nothing is called for sho
 |---|---|---|
 | Supplier email → finance agent | New bank details and a hidden "note for the automated payables assistant" | Block |
 | GitHub issue → coding agent | A "fix" that pipes a remote script into sudo and ships `~/.aws` out, plus a leaked token | Block, both scripts withheld, token masked |
-| Support ticket → helpdesk agent | An ordinary refund question with a card number, phone, and address | Forward the masked copy |
+| Support ticket → helpdesk agent | An ordinary refund-status question with a card number, phone, and address | Forward the masked copy |
 | Release notes → ops agent | Routine changelog and upgrade commands | Forward |
 
 ## Run it yourself

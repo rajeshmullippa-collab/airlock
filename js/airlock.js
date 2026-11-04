@@ -22,6 +22,7 @@ const maxRoute = (a, b) => (rank(a) >= rank(b) ? a : b);
 export const UNCERTAIN_LOW = 0.3;   // probabilities in [0.3, 0.5) are "uncertain" and go to a person
 export const THRESHOLD = 0.5;
 export const MAX_SCRIPT_CALLS = 4;
+export const SENSITIVE_OK = 0.8;  // a sensitive ask passes only if Decide puts >= 80% on forward routes
 
 export const PII_ENTITIES = {
   person: null, email: null, phone: null, address: null, date_of_birth: null,
@@ -83,7 +84,10 @@ export function replaceRanges(text, ranges) {
   const merged = [];
   for (const r of rs) {
     const last = merged[merged.length - 1];
-    if (last && r.start <= last.end) { last.end = Math.max(last.end, r.end); last.label = last.label === r.label ? last.label : last.label + ' + ' + r.label; }
+    if (last && r.start <= last.end) {
+      last.end = Math.max(last.end, r.end);
+      if (r.why === 'script' && last.why !== 'script') { last.label = r.label; last.why = 'script'; }
+    }
     else merged.push({ ...r });
   }
   let out = text;
@@ -227,7 +231,11 @@ export async function runAirlock(client, { text, policy }, onEvent = () => {}) {
   if (decide && decide.answers) {
     const r = decide.answers.route, a = decide.answers.asks;
     const sensitive = (a && a.selected || []).filter(x => ['move_money', 'share_secrets', 'change_access', 'run_code'].includes(x));
-    if (sensitive.length) { floor = maxRoute(floor, 'human_review'); reasons.push(`Decide: the content asks to ${sensitive.map(s => s.replace('_', ' ')).join(', ')}, which needs a person.`); }
+    const pr = (r && r.probabilities) || {};
+    const withinRole = (pr.forward || 0) + (pr.forward_redacted || 0);
+    const asksTxt = sensitive.map(s => s.replace('_', ' ')).join(', ');
+    if (sensitive.length && withinRole >= SENSITIVE_OK) reasons.push(`Decide saw a request to ${asksTxt}, but judged it within the agent's role (${(withinRole * 100).toFixed(0)}%).`);
+    else if (sensitive.length) { floor = maxRoute(floor, 'human_review'); reasons.push(`Decide: the content asks to ${asksTxt}, which needs a person.`); }
     route = floor;
     if (r && ROUTES.includes(r.choice)) {
       const top = r.probabilities ? r.probabilities[r.choice] : r.confidence;
