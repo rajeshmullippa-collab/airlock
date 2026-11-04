@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Airlock · record demo runs</title>
+<style>body{font:15px/1.5 system-ui,sans-serif;max-width:780px;margin:40px auto;padding:0 16px;color:#222}
+input{width:100%;padding:10px;font:inherit;border:1px solid #bbb;border-radius:8px}button{margin-top:12px;padding:10px 18px;font:inherit;border-radius:8px;border:0;background:#2747d8;color:#fff;cursor:pointer}
+pre{background:#f4f2ee;padding:12px;border-radius:8px;white-space:pre-wrap;word-break:break-word;font-size:13px}</style></head>
+<body>
+<h1>Record demo runs</h1>
+<p>Developer tool. It runs every sample in <code>js/samples.js</code> through the real Airlock pipeline with your Clocked key and
+publishes each recorded run (requests and responses, never the key) to a relay topic set with <code>?relay=topic</code>,
+so the runs can be committed to <code>demo/</code> and replayed by anyone without a key. The key is sent only to clocked.rezolve.ai.</p>
+<label>Clocked API key<br><input id="key" type="password" autocomplete="off" placeholder="Paste your Clocked API key"></label>
+<button id="go">Run all samples &amp; publish</button>
+<pre id="log">Waiting…</pre>
+<script type="module">
+import { ClockedClient, RecordingClient } from '../js/clocked.js';
+import { runAirlock } from '../js/airlock.js';
+import { SAMPLES } from '../js/samples.js';
+const qs = new URLSearchParams(location.search);
+const relay = qs.get('relay');
+const only = qs.get('only');
+const logEl = document.getElementById('log');
+const log = m => { logEl.textContent += '\n' + m; };
+async function publish(name, obj) {
+  if (!relay) { log('No relay topic; not published.'); return; }
+  const r = await fetch('https://ntfy.sh/' + encodeURIComponent(relay), { method: 'PUT', headers: { 'Filename': name }, body: JSON.stringify(obj) });
+  log('Published ' + name + ' → relay status ' + r.status);
+}
+document.getElementById('go').onclick = async () => {
+  const key = document.getElementById('key').value.trim();
+  logEl.textContent = 'Starting…';
+  if (!key) { log('ERROR: no key'); return; }
+  for (const s of SAMPLES) {
+    if (only && only !== s.id) continue;
+    const rec = new RecordingClient(new ClockedClient({ apiKey: key }));
+    try {
+      const run = await runAirlock(rec, { text: s.text, policy: s.policy }, ev => { if (ev.status === 'error') log(`  ${s.id} ${ev.step}: ERROR ${ev.error}`); });
+      log(`${s.id}: route=${run.route} credits=${run.credits} errors=${Object.keys(run.errors).length} steps=${Object.keys(rec.steps).join(',')}`);
+      await publish(s.id + '.json', { sample_id: s.id, recorded_at: new Date().toISOString(), route: run.route, reasons: run.reasons, text: s.text, policy: s.policy, steps: rec.steps });
+    } catch (e) { log(`${s.id}: ERROR ${e.message}`); }
+  }
+  log('ALL DONE');
+};
+</script></body></html>
