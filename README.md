@@ -2,7 +2,7 @@
 
 **A checkpoint between untrusted text and your AI agent.** Built on four [Clocked](https://clocked.rezolve.ai) endpoints: Guard, Inspect, Protect, and Decide.
 
-**Live demo:** https://rajeshmullippa-collab.github.io/airlock/ · **Video:** _see below_ · Entry for the [Clocked Build Challenge](https://clocked.rezolve.ai/challenge) (Oct 21 – Nov 10, 2026)
+**Live demo:** https://rajeshmullippa-collab.github.io/airlock/ · **Video (1.5 min):** https://www.youtube.com/watch?v=0VBF-yEdVoE · Entry for the [Clocked Build Challenge](https://clocked.rezolve.ai/challenge) (Oct 21 – Nov 10, 2026)
 
 AI agents now read inboxes, support tickets, GitHub issues, and web pages, and then act with real tools. Any of that text can carry:
 
