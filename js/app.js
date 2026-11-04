@@ -112,7 +112,7 @@ function render(run) {
   const asks = run.steps.decide?.answers?.asks?.selected || [];
   v.innerHTML = `<div class="v-title">${esc(ROUTE_LABEL[run.route])}${state.mode === 'replay' ? '<span class="replay-badge">RECORDED RUN</span>' : ''}</div>
     <ul>${run.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>
-    <div class="v-meta">${state.mode === 'replay' ? `Real Clocked responses recorded ${esc((state.fixture?.recorded_at || '').slice(0, 10))}` : 'Live'} · ${run.credits ? `${run.credits} Clocked credits · ` : ''}${Object.keys(run.steps).length} calls${asks.length ? ` · asks: ${asks.map(a => a.replace('_', ' ')).join(', ')}` : ''}</div>`;
+    <div class="v-meta">${state.mode === 'replay' ? `Real Clocked responses recorded ${esc(((state.fixture?.recorded_at || '').match(/\d{4}-\d{2}-\d{2}/) || [''])[0])}` : 'Live'} · ${run.credits ? `${run.credits} Clocked credits · ` : ''}${Object.keys(run.steps).length} calls${asks.length ? ` · asks: ${asks.map(a => a.replace('_', ' ')).join(', ')}` : ''}</div>`;
 
   const parts = [];
   // What the agent gets
