@@ -1,0 +1,10 @@
+{
+  "name": "airlock",
+  "version": "1.0.0",
+  "description": "A checkpoint between untrusted text and your AI agent, built on Clocked Guard, Inspect, Protect and Decide.",
+  "type": "module",
+  "bin": { "airlock": "cli/airlock.mjs" },
+  "scripts": { "test": "node --test tests/*.test.mjs", "serve": "python3 -m http.server 8080" },
+  "engines": { "node": ">=18" },
+  "license": "MIT"
+}
